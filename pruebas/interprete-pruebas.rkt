@@ -68,7 +68,7 @@
                          (zero?-exp (var-exp 'i)))))
 
    (test-case "parse arma el condicional y la ligadura"
-     (check-equal? (list (parse '(if (zero? x) 1 2))
+     (check-equal? (list (parse '(if (zero? x) then 1 else 2))
                          (parse '(let y = 5 in (- y 3))))
                    (list (if-exp (zero?-exp (var-exp 'x))
                                  (const-exp 1)
@@ -84,7 +84,12 @@
    (test-case "parse rechaza un let con el = o el in fuera de su sitio"
      (check-exn exn:fail? (lambda () (parse '(let x 5 in y))))
      (check-exn exn:fail? (lambda () (parse '(let x = 5 en y))))
-     (check-exn exn:fail? (lambda () (parse '(let x = 5 in)))))))
+     (check-exn exn:fail? (lambda () (parse '(let x = 5 in)))))
+
+   (test-case "parse rechaza un if con el then o el else fuera de su sitio"
+     (check-exn exn:fail? (lambda () (parse '(if (zero? x) 1 2))))
+     (check-exn exn:fail? (lambda () (parse '(if (zero? x) then 1 2))))
+     (check-exn exn:fail? (lambda () (parse '(if (zero? x) then 1 sino 2)))))))
 
 ;; ---------------------------------------------------------------------------
 
@@ -177,16 +182,16 @@
    "Punto 4 — if-exp y let-exp"
 
    (verificar "el condicional toma la rama del consecuente"
-              1 (evaluar '(if (zero? 0) 1 2)))
+              1 (evaluar '(if (zero? 0) then 1 else 2)))
 
    (verificar "el condicional toma la rama del alternante"
-              2 (evaluar '(if (zero? 3) 1 2)))
+              2 (evaluar '(if (zero? 3) then 1 else 2)))
 
    (verificar "la rama que no se toma no se evalúa"
-              5 (evaluar '(if (zero? 0) 5 (- 1 (zero? 0)))))
+              5 (evaluar '(if (zero? 0) then 5 else (- 1 (zero? 0)))))
 
    (verificar "el condicional usa el ambiente"
-              20 (evaluar '(if (zero? (- x 10)) (- x -10) 0)))
+              20 (evaluar '(if (zero? (- x 10)) then (- x -10) else 0)))
 
    (verificar "el ejemplo de la sección 3.2 con let"
               2 (evaluar '(let y = 5 in (- y 3))))
@@ -201,14 +206,14 @@
               -5 (evaluar '(- (let x = 5 in x) x)))
 
    (verificar "let y condicional combinados"
-              14 (evaluar '(let y = 4 in (if (zero? y) 0 (- (- 10 y) -8)))))
+              14 (evaluar '(let y = 4 in (if (zero? y) then 0 else (- (- 10 y) -8)))))
 
    ;; Regla del curso: la prueba del condicional tiene que ser un booleano.
    (verificar-error "un número en la prueba del condicional es un error"
-                    (evaluar '(if 5 1 2)))
+                    (evaluar '(if 5 then 1 else 2)))
 
    (verificar-error "una variable numérica en la prueba también lo es"
-                    (evaluar '(if x 1 2)))))
+                    (evaluar '(if x then 1 else 2)))))
 
 ;; ---------------------------------------------------------------------------
 

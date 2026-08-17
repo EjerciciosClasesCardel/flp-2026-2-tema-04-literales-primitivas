@@ -29,18 +29,19 @@ Expression ::= Number                        const-exp  (num)
 Los programas se escriben como listas de Scheme y `parse` los traduce a
 sintaxis abstracta:
 
-| sección 3.1             | como lista           | variante    |
-|-------------------------|----------------------|-------------|
-| `14`                    | `14`                 | `const-exp` |
-| `x`                     | `x`                  | `var-exp`   |
-| `-(e1, e2)`             | `(- e1 e2)`          | `diff-exp`  |
-| `zero?(e1)`             | `(zero? e1)`         | `zero?-exp` |
-| `if e1 then e2 else e3` | `(if e1 e2 e3)`      | `if-exp`    |
-| `let x = e1 in e2`      | `(let x = e1 in e2)` | `let-exp`   |
+| sección 3.1             | como lista                | variante    |
+|-------------------------|---------------------------|-------------|
+| `14`                    | `14`                      | `const-exp` |
+| `x`                     | `x`                       | `var-exp`   |
+| `-(e1, e2)`             | `(- e1 e2)`               | `diff-exp`  |
+| `zero?(e1)`             | `(zero? e1)`              | `zero?-exp` |
+| `if e1 then e2 else e3` | `(if e1 then e2 else e3)` | `if-exp`    |
+| `let x = e1 in e2`      | `(let x = e1 in e2)`      | `let-exp`   |
 
-Es la sintaxis del tema 3. El `=` y el `in` son palabras de la gramática y van
-en su posición: `(let x 5 in y)` y `(let x = 5 en y)` no son programas del
-lenguaje y `parse` los rechaza.
+Es la sintaxis que usan los demás temas del curso. El `then`, el `else`, el `=`
+y el `in` son palabras de la gramática y van en su posición: `(if x 1 2)`,
+`(let x 5 in y)` y `(let x = 5 en y)` no son programas del lenguaje y `parse`
+los rechaza.
 
 El valor expresado es lo que devuelve la evaluación de una expresión (EOPL,
 sección 3.2). Aquí hay dos, `ExpVal = Int + Bool`, representados con los
@@ -94,7 +95,7 @@ O desde DrRacket, abriendo `pruebas/interprete-pruebas.rkt` y pulsando
 
 ## El punto de partida
 
-Al clonar hay 40 pruebas: 7 en verde y 33 en rojo. Las verdes comprueban que
+Al clonar hay 41 pruebas: 8 en verde y 33 en rojo. Las verdes comprueban que
 los tres módulos cargan, que el ambiente inicial está donde debe y que `parse`
 arma el árbol que se espera y rechaza lo que no pertenece al lenguaje; que
 pasen significa que Racket y `eopl` quedaron bien instalados y que la parte ya
@@ -144,7 +145,7 @@ adelante. Al evaluar `if-exp`:
 
 Lo que no se hace es entregarle al `if` de Scheme el resultado de `value-of`
 sin mirar el tipo. Scheme trata como verdadero todo lo que no sea `#f`, así que
-`(if 5 1 2)` devolvería 1 tan tranquilo y el lenguaje que usted implementó
+`(if 5 then 1 else 2)` devolvería 1 tan tranquilo y el lenguaje que usted implementó
 habría aceptado un programa que no tiene sentido. Hay dos pruebas que exigen
 justamente ese error.
 
@@ -152,9 +153,9 @@ justamente ese error.
 
 - **La rama que no se toma no se evalúa.** Evalúe la prueba, decida, y solo
   entonces llame a `value-of` sobre la rama que corresponde. Si evalúa las dos
-  y después escoge, `(if (zero? 0) 5 (- 1 (zero? 0)))` revienta en vez de dar
-  5.
+  y después escoge, `(if (zero? 0) then 5 else (- 1 (zero? 0)))` revienta en vez
+  de dar 5.
 - **El `let` no altera el ambiente de afuera.** `extend-env` devuelve un
   ambiente nuevo; el que recibió sigue igual. Después de
-  `(- (let x = 5 in x) x)` con el ambiente inicial, la `x` de la derecha vale 10 y
-  el resultado es -5.
+  `(- (let x = 5 in x) x)` con el ambiente inicial, la `x` de la derecha vale
+  10 y el resultado es -5.

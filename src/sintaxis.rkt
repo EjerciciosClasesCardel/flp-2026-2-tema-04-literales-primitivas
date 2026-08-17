@@ -27,18 +27,19 @@
 ;; lexer y un parser generados. Aquí el programa llega ya como una lista de
 ;; Scheme y `parse` solo lo traduce a sintaxis abstracta:
 ;;
-;;   sección 3.1                 como lista            variante
-;;   ---------------------------------------------------------------
-;;   14                          14                    const-exp
-;;   x                           x                     var-exp
-;;   -(e1, e2)                   (- e1 e2)             diff-exp
-;;   zero?(e1)                   (zero? e1)            zero?-exp
-;;   if e1 then e2 else e3       (if e1 e2 e3)         if-exp
-;;   let x = e1 in e2            (let x = e1 in e2)    let-exp
+;;   sección 3.1                 como lista                        variante
+;;   -------------------------------------------------------------------------
+;;   14                          14                                const-exp
+;;   x                           x                                 var-exp
+;;   -(e1, e2)                   (- e1 e2)                         diff-exp
+;;   zero?(e1)                   (zero? e1)                        zero?-exp
+;;   if e1 then e2 else e3       (if e1 then e2 else e3)           if-exp
+;;   let x = e1 in e2            (let x = e1 in e2)                let-exp
 ;;
-;; Es la sintaxis del tema 3. El `=` y el `in` son palabras de la gramática y
-;; van en su posición: `(let x 5 in y)` y `(let x = 5 en y)` no son programas
-;; del lenguaje, y parse los rechaza igual que rechaza `(+ 1 2)`.
+;; Es la sintaxis con la que trabajan los demás temas del curso. El `then`, el
+;; `else`, el `=` y el `in` son palabras de la gramática y van en su posición:
+;; `(if x 1 2)`, `(let x 5 in y)` y `(let x = 5 en y)` no son programas del
+;; lenguaje, y parse los rechaza igual que rechaza `(+ 1 2)`.
 ;;
 ;; Un ejemplo completo, el de la figura 3.4 escrito con listas:
 ;;
@@ -83,8 +84,12 @@
        (diff-exp (parse (cadr dato)) (parse (caddr dato))))
       ((forma? dato 'zero? 2)
        (zero?-exp (parse (cadr dato))))
-      ((forma? dato 'if 4)
-       (if-exp (parse (cadr dato)) (parse (caddr dato)) (parse (cadddr dato))))
+      ((and (forma? dato 'if 6)
+            (eqv? (list-ref dato 2) 'then)
+            (eqv? (list-ref dato 4) 'else))
+       (if-exp (parse (cadr dato))
+               (parse (list-ref dato 3))
+               (parse (list-ref dato 5))))
       ((and (forma? dato 'let 6)
             (symbol? (cadr dato))
             (eqv? (list-ref dato 2) '=)
