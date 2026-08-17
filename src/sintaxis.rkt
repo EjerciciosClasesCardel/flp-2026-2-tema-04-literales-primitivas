@@ -1,6 +1,6 @@
 #lang eopl
 
-;; Tema 4 — Sintaxis abstracta y analizador sintáctico (resuelto)
+;; Tema 4 — Sintaxis abstracta y analizador sintáctico
 ;; Fundamentos de Interpretación y Compilación de Lenguajes de Programación
 ;; Universidad del Valle, sede Tuluá
 ;;

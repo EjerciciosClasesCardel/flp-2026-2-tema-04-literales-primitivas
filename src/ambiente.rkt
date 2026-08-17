@@ -1,6 +1,6 @@
 #lang eopl
 
-;; Tema 4 — El TAD de ambientes (resuelto)
+;; Tema 4 — El TAD de ambientes
 ;; Fundamentos de Interpretación y Compilación de Lenguajes de Programación
 ;; Universidad del Valle, sede Tuluá
 ;;
