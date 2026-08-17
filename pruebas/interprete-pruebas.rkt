@@ -69,7 +69,7 @@
 
    (test-case "parse arma el condicional y la ligadura"
      (check-equal? (list (parse '(if (zero? x) 1 2))
-                         (parse '(let (y 5) (- y 3))))
+                         (parse '(let y = 5 in (- y 3))))
                    (list (if-exp (zero?-exp (var-exp 'x))
                                  (const-exp 1)
                                  (const-exp 2))
@@ -78,7 +78,13 @@
                                   (diff-exp (var-exp 'y) (const-exp 3))))))
 
    (test-case "parse rechaza lo que no está en la gramática"
-     (check-exn exn:fail? (lambda () (parse '(mientras x 1)))))))
+     (check-exn exn:fail? (lambda () (parse '(mientras x 1))))
+     (check-exn exn:fail? (lambda () (parse '(+ 1 2)))))
+
+   (test-case "parse rechaza un let con el = o el in fuera de su sitio"
+     (check-exn exn:fail? (lambda () (parse '(let x 5 in y))))
+     (check-exn exn:fail? (lambda () (parse '(let x = 5 en y))))
+     (check-exn exn:fail? (lambda () (parse '(let x = 5 in)))))))
 
 ;; ---------------------------------------------------------------------------
 
@@ -183,19 +189,19 @@
               20 (evaluar '(if (zero? (- x 10)) (- x -10) 0)))
 
    (verificar "el ejemplo de la sección 3.2 con let"
-              2 (evaluar '(let (y 5) (- y 3))))
+              2 (evaluar '(let y = 5 in (- y 3))))
 
    (verificar "el cuerpo del let ve las variables de afuera"
-              -5 (evaluar '(- (let (y 5) y) x)))
+              5 (evaluar '(let y = 5 in (- x y))))
 
    (verificar "la ligadura de adentro tapa a la de afuera"
-              3 (evaluar '(let (x 5) (let (x 3) x))))
+              3 (evaluar '(let x = 5 in (let x = 3 in x))))
 
    (verificar "el let no altera el ambiente de afuera"
-              -5 (evaluar '(- (let (x 5) x) x)))
+              -5 (evaluar '(- (let x = 5 in x) x)))
 
    (verificar "let y condicional combinados"
-              14 (evaluar '(let (y 4) (if (zero? y) 0 (- (- 10 y) -8)))))
+              14 (evaluar '(let y = 4 in (if (zero? y) 0 (- (- 10 y) -8)))))
 
    ;; Regla del curso: la prueba del condicional tiene que ser un booleano.
    (verificar-error "un número en la prueba del condicional es un error"

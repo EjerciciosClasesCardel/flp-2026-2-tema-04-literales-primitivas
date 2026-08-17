@@ -34,14 +34,18 @@
 ;;   -(e1, e2)                   (- e1 e2)             diff-exp
 ;;   zero?(e1)                   (zero? e1)            zero?-exp
 ;;   if e1 then e2 else e3       (if e1 e2 e3)         if-exp
-;;   let x = e1 in e2            (let (x e1) e2)       let-exp
+;;   let x = e1 in e2            (let x = e1 in e2)    let-exp
+;;
+;; Es la sintaxis del tema 3. El `=` y el `in` son palabras de la gramática y
+;; van en su posición: `(let x 5 in y)` y `(let x = 5 en y)` no son programas
+;; del lenguaje, y parse los rechaza igual que rechaza `(+ 1 2)`.
 ;;
 ;; Un ejemplo completo, el de la figura 3.4 escrito con listas:
 ;;
-;;   (let (x 5) (- x 3))   =>   #(struct:let-exp x
-;;                                 #(struct:const-exp 5)
-;;                                 #(struct:diff-exp #(struct:var-exp x)
-;;                                                   #(struct:const-exp 3)))
+;;   (let x = 5 in (- x 3))  =>  #(struct:let-exp x
+;;                                  #(struct:const-exp 5)
+;;                                  #(struct:diff-exp #(struct:var-exp x)
+;;                                                    #(struct:const-exp 3)))
 
 ;; ---------------------------------------------------------------------------
 ;; Sintaxis abstracta
@@ -81,13 +85,13 @@
        (zero?-exp (parse (cadr dato))))
       ((forma? dato 'if 4)
        (if-exp (parse (cadr dato)) (parse (caddr dato)) (parse (cadddr dato))))
-      ((and (forma? dato 'let 3)
-            (pair? (cadr dato))
-            (= (length (cadr dato)) 2)
-            (symbol? (car (cadr dato))))
-       (let-exp (car (cadr dato))
-                (parse (cadr (cadr dato)))
-                (parse (caddr dato))))
+      ((and (forma? dato 'let 6)
+            (symbol? (cadr dato))
+            (eqv? (list-ref dato 2) '=)
+            (eqv? (list-ref dato 4) 'in))
+       (let-exp (cadr dato)
+                (parse (list-ref dato 3))
+                (parse (list-ref dato 5))))
       (else
        (eopl:error 'parse "no es una expresión del lenguaje: ~s" dato)))))
 
