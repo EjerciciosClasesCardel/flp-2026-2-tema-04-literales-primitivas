@@ -4,11 +4,12 @@
 ;; Fundamentos de Interpretación y Compilación de Lenguajes de Programación
 ;; Universidad del Valle, sede Tuluá
 ;;
-;; Aquí van los cuatro puntos. No modifique la carpeta pruebas/ ni los otros
-;; dos archivos de src/, que ya vienen resueltos.
+;; Aquí van los puntos 3, 4, 5 y 6. Los puntos 1 y 2 están en
+;; src/gramatica.rkt. No modifique la carpeta pruebas/ ni src/ambiente.rkt,
+;; que ya viene resuelto.
 
 (require "ambiente.rkt"
-         "sintaxis.rkt")
+         "gramatica.rkt")
 
 (provide expval->num expval->bool value-of)
 
@@ -27,7 +28,7 @@
 ;; programa está mal y hay que decirlo con un error, no seguir calculando.
 
 ;; ---------------------------------------------------------------------------
-;; Punto 1: los extractores
+;; Punto 3: los extractores
 
 ;; expval->num : ExpVal -> Int
 ;; El número que hay dentro del valor expresado. Si el valor no es un número,
@@ -44,18 +45,19 @@
     (eopl:error 'expval->bool "sin-implementar")))
 
 ;; ---------------------------------------------------------------------------
-;; Puntos 2, 3 y 4: la función de evaluación
+;; Puntos 4, 5 y 6: la función de evaluación
 ;;
 ;; value-of : Expresion × Env -> ExpVal
 ;;
-;; El esqueleto con `cases` ya está puesto y se deja así: la sintaxis abstracta
-;; se analiza por variantes, nunca con car, cdr o cond sobre la estructura.
-;; Cada rama corresponde a una regla de la sección 3.2 y lo único que falta es
-;; su cuerpo.
+;; El árbol que llega aquí es el que armó `scan&parse` con la gramática del
+;; punto 2. El esqueleto con `cases` ya está puesto y se deja así: la sintaxis
+;; abstracta se analiza por variantes, nunca con car, cdr o cond sobre la
+;; estructura. Cada rama corresponde a una regla de la sección 3.2 y lo único
+;; que falta es su cuerpo.
 ;;
-;;   Punto 2:  const-exp, var-exp
-;;   Punto 3:  diff-exp, zero?-exp
-;;   Punto 4:  if-exp, let-exp
+;;   Punto 4:  const-exp, var-exp
+;;   Punto 5:  diff-exp, zero?-exp
+;;   Punto 6:  if-exp, let-exp
 ;;
 ;; Las reglas, en el orden en que hay que resolverlas:
 ;;
@@ -94,21 +96,21 @@
   (lambda (exp env)
     (cases expresion exp
 
-      ;; Punto 2
+      ;; Punto 4
       (const-exp (num)
                  (eopl:error 'value-of "sin-implementar"))
 
       (var-exp (var)
                (eopl:error 'value-of "sin-implementar"))
 
-      ;; Punto 3
+      ;; Punto 5
       (diff-exp (exp1 exp2)
                 (eopl:error 'value-of "sin-implementar"))
 
       (zero?-exp (exp1)
                  (eopl:error 'value-of "sin-implementar"))
 
-      ;; Punto 4
+      ;; Punto 6
       (if-exp (exp1 exp2 exp3)
               (eopl:error 'value-of "sin-implementar"))
 

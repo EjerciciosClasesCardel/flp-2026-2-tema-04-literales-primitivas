@@ -5,11 +5,26 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  # Repositorio del curso. Las pruebas y el verificador se toman siempre de
+  # aquí, no de la copia del fork, para que modificarlos no sirva de nada.
+  ORIGINAL: EjerciciosClasesCardel/flp-2026-2-tema-04-literales-primitivas
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restaurar las pruebas del curso
+        run: |
+          git clone --depth 1 --quiet "https://github.com/${ORIGINAL}.git" /tmp/original
+          if ! diff -rq pruebas/ /tmp/original/pruebas/ >/dev/null 2>&1; then
+            echo "::warning::Las pruebas de este repositorio no coinciden con las del curso. Se corren las del curso."
+            diff -rq pruebas/ /tmp/original/pruebas/ || true
+          fi
+          rm -rf pruebas verificar
+          cp -r /tmp/original/pruebas /tmp/original/verificar .
 
       - name: Instalar Racket
         uses: Bogdanp/setup-racket@v1.15
@@ -18,5 +33,13 @@ jobs:
           variant: CS
           distribution: full
 
+      - name: Compilar el código
+        run: raco make src/*.rkt pruebas/*.rkt
+
+      - name: Reglas del curso
+        if: always()
+        run: racket verificar/reglas.rkt
+
       - name: Ejecutar las pruebas
+        if: always()
         run: raco test pruebas/

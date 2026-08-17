@@ -7,11 +7,27 @@ Carlos Andrés Delgado Saavedra
 Ejercicio de autoseguimiento del tema 4. No se califica y no hay que
 entregarlo: las pruebas le dicen solas si va bien.
 
-Este es el primer intérprete de verdad del curso. Hasta el tema 3 el trabajo
-fue armar el árbol de sintaxis abstracta; aquí ese árbol por fin se evalúa.
-Todo lo que viene después —procedimientos, recursión, asignación, tipos— se
-construye agregándole ramas a la función `value-of` que va a escribir en este
-ejercicio.
+Este es el primer lenguaje completo del curso, del texto al valor. El front-end
+lo genera SLLGEN a partir de dos especificaciones que usted escribe: de ahí
+salen el escáner y el analizador sintáctico. El back-end es `value-of`, la
+función que recorre el árbol y lo evalúa. Lo que viene después —procedimientos,
+recursión, asignación, tipos— se construye agregándole producciones a la
+gramática y ramas a `value-of`.
+
+## Los programas ahora se escriben como texto
+
+Hasta el tema 3 los programas venían como listas de Scheme, `(let x = 5 in
+(- x 3))`, y una función `parse` hecha a mano las traducía a sintaxis
+abstracta. Ese `parse` era un andamio: permitía trabajar el árbol sin depender
+todavía de un analizador. Desde este tema la sintaxis concreta es texto, la
+misma del libro, y el analizador sale de la gramática:
+
+```racket
+(scan&parse "let x = 5 in -(x, 3)")
+```
+
+El `parse` sobre listas no está en este repositorio y no vuelve a aparecer en
+el curso.
 
 ## De qué se trata
 
@@ -26,22 +42,17 @@ Expression ::= Number                        const-exp  (num)
            ::= let Id = Exp in Exp           let-exp    (var exp1 body)
 ```
 
-Los programas se escriben como listas de Scheme y `parse` los traduce a
-sintaxis abstracta:
+Y el camino que recorre un programa es este:
 
-| sección 3.1             | como lista                | variante    |
-|-------------------------|---------------------------|-------------|
-| `14`                    | `14`                      | `const-exp` |
-| `x`                     | `x`                       | `var-exp`   |
-| `-(e1, e2)`             | `(- e1 e2)`               | `diff-exp`  |
-| `zero?(e1)`             | `(zero? e1)`              | `zero?-exp` |
-| `if e1 then e2 else e3` | `(if e1 then e2 else e3)` | `if-exp`    |
-| `let x = e1 in e2`      | `(let x = e1 in e2)`      | `let-exp`   |
+```
+texto  ->  escáner  ->  tokens  ->  parser  ->  árbol  ->  value-of  ->  valor
+```
 
-Es la sintaxis que usan los demás temas del curso. El `then`, el `else`, el `=`
-y el `in` son palabras de la gramática y van en su posición: `(if x 1 2)`,
-`(let x 5 in y)` y `(let x = 5 en y)` no son programas del lenguaje y `parse`
-los rechaza.
+El escáner parte el texto en tokens y descarta espacios y comentarios; el
+parser arma el árbol de sintaxis abstracta; `value-of` lo evalúa. SLLGEN genera
+el escáner y el parser a partir de la especificación léxica y la especificación
+gramatical (EOPL, apéndice B), y de la gramática saca además el
+`define-datatype` del árbol.
 
 El valor expresado es lo que devuelve la evaluación de una expresión (EOPL,
 sección 3.2). Aquí hay dos, `ExpVal = Int + Bool`, representados con los
@@ -51,16 +62,22 @@ números y los booleanos de Scheme.
 
 ```
 src/ambiente.rkt                el TAD de ambientes, ya resuelto
-src/sintaxis.rkt                el define-datatype y parse, ya resueltos
-src/interprete.rkt              los cuatro puntos
+src/gramatica.rkt               los puntos 1 y 2
+src/interprete.rkt              los puntos 3, 4, 5 y 6
 pruebas/interprete-pruebas.rkt  las pruebas, que no se modifican
+verificar/                      las reglas del curso, que tampoco se modifican
 ```
 
-Los dos primeros archivos vienen resueltos y no hay que tocarlos. El ambiente
-es el del tema 2 con la representación de listas, más `init-env`, el ambiente
-inicial de la sección 3.2 donde `i` vale 1, `v` vale 5 y `x` vale 10. Las
-pruebas evalúan todo contra ese ambiente, así que puede usar esas tres
-variables en sus ejemplos sin ligarlas.
+`src/ambiente.rkt` viene resuelto y no hay que tocarlo. Es el ambiente del
+tema 2 con la representación de listas, más `init-env`, el ambiente inicial de
+la sección 3.2 donde `i` vale 1, `v` vale 5 y `x` vale 10. Las pruebas evalúan
+todo contra ese ambiente, así que puede usar esas tres variables en sus
+ejemplos sin ligarlas.
+
+En `src/gramatica.rkt` también viene escrita la parte que llama a SLLGEN:
+`sllgen:make-define-datatypes`, que genera el datatype del árbol, y
+`sllgen:make-string-parser`, que genera el analizador. Lo que falta ahí son las
+dos especificaciones que esas llamadas reciben.
 
 ## Cómo empezar
 
@@ -79,7 +96,8 @@ variables en sus ejemplos sin ligarlas.
    cd flp-2026-2-tema-04-literales-primitivas
    ```
 
-4. **Resuelva** los cuatro puntos en `src/interprete.rkt`.
+4. **Resuelva** los puntos 1 y 2 en `src/gramatica.rkt` y los puntos 3, 4, 5 y
+   6 en `src/interprete.rkt`.
 
 5. **Haga push.** Cada push dispara las pruebas.
 
@@ -87,46 +105,77 @@ variables en sus ejemplos sin ligarlas.
 
 ```bash
 raco test pruebas/
+racket verificar/reglas.rkt
 ```
 
-O desde DrRacket, abriendo `pruebas/interprete-pruebas.rkt` y pulsando
-*Ejecutar*. Si necesita instalar Racket, use la distribución completa de
+Las pruebas miran lo que devuelven sus funciones; el verificador mira cómo
+están escritas y avisa qué falta por escribir. También puede trabajar desde
+DrRacket, abriendo `pruebas/interprete-pruebas.rkt` y pulsando *Ejecutar*. Si
+necesita instalar Racket, use la distribución completa de
 [racket-lang.org](https://racket-lang.org): la mínima no trae `#lang eopl`.
 
 ## El punto de partida
 
-Al clonar hay 41 pruebas: 8 en verde y 33 en rojo. Las verdes comprueban que
-los tres módulos cargan, que el ambiente inicial está donde debe y que `parse`
-arma el árbol que se espera y rechaza lo que no pertenece al lenguaje; que
-pasen significa que Racket y `eopl` quedaron bien instalados y que la parte ya
-resuelta funciona.
+Al clonar hay 53 pruebas: 3 en verde y 50 en rojo. Las verdes comprueban que
+los módulos cargan, que el ambiente inicial está donde debe y que el datatype
+del árbol tiene sus seis variantes; que pasen significa que Racket y `eopl`
+quedaron bien instalados.
 
-## Los cuatro puntos
+La gramática que trae el repositorio reconoce una sintaxis provisional, con una
+palabra clave inventada al frente de cada producción. Está ahí para que el
+proyecto compile mientras usted escribe la suya, y ningún programa del lenguaje
+pasa por ella. Los nombres de las variantes y sus campos sí se quedan como
+están: `value-of` analiza el árbol con esos seis nombres.
 
-### 1. `expval->num` y `expval->bool`
+## Los seis puntos
 
-Los extractores del valor expresado (EOPL, sección 3.2). Cada uno devuelve el
-valor cuando es del tipo que se pidió y lanza un error con `eopl:error` cuando
-no lo es. Como los valores expresados son números y booleanos de Scheme, el
-cuerpo es corto: la comprobación es lo único que hay.
+### 1. La especificación léxica
+
+En `src/gramatica.rkt`. Cada regla es `(nombre (patrón) acción)`: el nombre de
+la categoría, la expresión regular que la reconoce y qué hacer con el texto
+reconocido, sea descartarlo con `skip` o convertirlo con `symbol` o `number`.
+
+Las reglas de los espacios y los comentarios ya están. Faltan las dos
+categorías con contenido: `identificador`, una letra seguida de cero o más
+letras, dígitos, `?` o `$`; y `numero`, un entero con signo menos opcional
+adelante. Las palabras del lenguaje y los signos no se declaran aquí, SLLGEN
+los saca de la gramática.
+
+### 2. La especificación gramatical
+
+Las seis producciones de la sección 3.1, cada una con su sintaxis concreta y el
+nombre de la variante que construye: `(expresion (sintaxis concreta) variante)`.
+Las cadenas literales son los signos y las palabras que el programador escribe;
+las categorías léxicas y los no terminales son los campos de la variante.
+
+Cuando quede, `(scan&parse "let x = 5 in -(x, 3)")` devuelve el árbol de la
+figura 3.4 y `(datatypes-generados)` muestra el `define-datatype` que sale de
+su gramática.
+
+### 3. `expval->num` y `expval->bool`
+
+En `src/interprete.rkt`. Los extractores del valor expresado (EOPL, sección
+3.2). Cada uno devuelve el valor cuando es del tipo que se pidió y lanza un
+error con `eopl:error` cuando no lo es. Como los valores expresados son números
+y booleanos de Scheme, el cuerpo es corto: la comprobación es lo único que hay.
 
 Por ahí pasa después todo lo que necesita un tipo concreto. `diff-exp` pide dos
 números, `if-exp` pide un booleano, y si el programa entrega otra cosa el error
 sale de aquí, no de una operación de Scheme fallando tres marcos más abajo.
 
-### 2. `value-of` para `const-exp` y `var-exp`
+### 4. `value-of` para `const-exp` y `var-exp`
 
 Las dos hojas del árbol. El literal se evalúa a sí mismo y la variable se
 resuelve contra el ambiente con `apply-env`.
 
-### 3. `value-of` para `diff-exp` y `zero?-exp`
+### 5. `value-of` para `diff-exp` y `zero?-exp`
 
 Las dos primitivas. `diff-exp` evalúa las dos subexpresiones, saca los números
 con `expval->num` y resta. `zero?-exp` evalúa la suya y devuelve un booleano:
 esta es la única producción del lenguaje que fabrica booleanos, y por eso
 existe.
 
-### 4. `value-of` para `if-exp` y `let-exp`
+### 6. `value-of` para `if-exp` y `let-exp`
 
 `let-exp` evalúa la expresión ligada, extiende el ambiente y evalúa el cuerpo
 en el ambiente extendido. `if-exp` tiene su propia regla, la de aquí abajo.
@@ -145,17 +194,20 @@ adelante. Al evaluar `if-exp`:
 
 Lo que no se hace es entregarle al `if` de Scheme el resultado de `value-of`
 sin mirar el tipo. Scheme trata como verdadero todo lo que no sea `#f`, así que
-`(if 5 then 1 else 2)` devolvería 1 tan tranquilo y el lenguaje que usted implementó
-habría aceptado un programa que no tiene sentido. Hay dos pruebas que exigen
-justamente ese error.
+`if 5 then 1 else 2` devolvería 1 tan tranquilo y el lenguaje que usted
+implementó habría aceptado un programa que no tiene sentido. Hay dos pruebas
+que exigen justamente ese error.
 
-## Dos cosas que las pruebas revisan y suelen olvidarse
+## Tres cosas que las pruebas revisan y suelen olvidarse
 
+- **El lenguaje acepta enteros negativos.** `-7` es un literal y `-(x, 3)` es
+  una resta. Con las dos reglas de `numero` y la sintaxis concreta de
+  `diff-exp` bien escritas, el escáner distingue los dos casos solo.
 - **La rama que no se toma no se evalúa.** Evalúe la prueba, decida, y solo
   entonces llame a `value-of` sobre la rama que corresponde. Si evalúa las dos
-  y después escoge, `(if (zero? 0) then 5 else (- 1 (zero? 0)))` revienta en vez
+  y después escoge, `if zero?(0) then 5 else -(1, zero?(0))` revienta en vez
   de dar 5.
 - **El `let` no altera el ambiente de afuera.** `extend-env` devuelve un
   ambiente nuevo; el que recibió sigue igual. Después de
-  `(- (let x = 5 in x) x)` con el ambiente inicial, la `x` de la derecha vale
-  10 y el resultado es -5.
+  `-(let x = 5 in x, x)` con el ambiente inicial, la `x` de la derecha vale 10
+  y el resultado es -5.
